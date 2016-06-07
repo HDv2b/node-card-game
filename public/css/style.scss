@@ -1,0 +1,338 @@
+@import "components/_reset";
+@import "components/_cards";
+
+%card-revealed {
+  transform: rotateX(-20deg) scale3d(1.2, 1.2, 1);
+  transform-origin: 50% 100%;
+}
+
+html {
+  font-size: 10px;
+}
+
+body {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.table {
+  width: 100%;
+  height: 100%;
+
+  .drawn-card {
+    @extend %card;
+    position: relative;
+    pointer-events: none;
+    &[data-slot-status="empty"]{
+      display: none;
+    }
+  }
+
+  &[data-your-turn="false"] {
+    .drawn-card {
+      transform: rotateX(-40deg);
+      pointer-events: none;
+      position: relative;
+      top: -60px;
+      left: 30px;
+    }
+  }
+
+  &[data-your-turn="true"] {
+    .drawn-card {
+      top: 20px;
+      left: 30px;
+      @extend %card-revealed;
+    }
+  }
+
+}
+
+.middle-area {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
+.opponent-area {
+  justify-content: flex-start;
+}
+
+.my-area {
+  justify-content: flex-end;
+}
+
+.discard-pile,
+.deck,
+.middle-controls {
+  margin: 20px;
+}
+
+.middle-controls {
+  @extend %card;
+  background: none;
+}
+
+.deck {
+  &[data-slot-status="card-back"] {
+    @extend .sprite;
+    @extend .sprite-cardBack_blue3;
+  }
+  &[data-slot-status="slot-empty"] {
+    border: 1px grey dashed;
+    border-radius: 15px;
+    content: "no more cards...";
+  }
+  perspective: 500px;
+  perspective-origin: 100px 50%;
+}
+
+.discard-pile {
+  @extend %card;
+  &[data-slot-status="card-front"] {
+    @extend .sprite;
+  }
+  &[data-slot-status="slot-empty"] {
+    border: 1px grey dashed;
+    border-radius: 15px;
+  }
+}
+
+.player-area {
+  height: 40%;
+  .name-tag {
+    font-size: 3.6em;
+    text-align: center;
+    line-height: 1.4em;
+  }
+  .hand {
+    width: 100%;
+    height: 80%;
+    display: inline-flex;
+    align-content: flex-start;
+  }
+  &.my-area {
+    .hand {
+      flex-wrap: wrap;
+      flex-direction: column-reverse;
+    }
+  }
+  &.opponent-area {
+    .hand {
+      flex-wrap: wrap-reverse;
+      flex-direction: column;
+    }
+  }
+  .holding-card {
+    display: inline-block;
+  }
+  .card-slot {
+    margin: 20px;
+    width: 140px;
+    height: calc(50% - 40px);
+    perspective: 500px;
+    perspective-origin: 100px 50%;
+  }
+  .holding-card,
+  .card {
+    width: 140px;
+    height: 190px;
+  }
+  .card-slot {
+    outline-offset: 5px;
+    outline: 1px grey dashed;
+    border-radius: 15px;
+    &[data-slot-status="card-back"] {
+      .card {
+        @extend .sprite;
+        @extend .sprite-cardBack_blue3;
+      }
+    }
+    &[data-slot-status="card-front"] {
+      .card {
+        @extend .sprite;
+        @extend %card-revealed;
+      }
+    }
+    &[data-slot-status="card-front-public"] {
+      .card {
+        @extend .sprite;
+      }
+    }
+  }
+}
+
+.card-slot {
+  position: relative;
+  &[data-slot-status="card-front"] {
+    z-index: 1;
+  }
+}
+
+.card {
+  position: absolute;
+  overflow: hidden;
+}
+
+.card-controls {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.deck {
+  position: relative;
+
+  button {
+    margin: auto;
+    display: block;
+    position: relative;
+    top: 60%;
+    margin-bottom: 3px;
+    min-height: 44px;
+  }
+
+  label {
+    appearance: button;
+    -moz-appearance: button; /* Firefox */
+    -webkit-appearance: button; /* Safari and Chrome */
+    margin: auto;
+    text-align: center;
+    margin-bottom: 3px;
+    min-height: 44px;
+  }
+}
+
+.cabo-button {
+  height: 2.5em;
+}
+
+.table{
+  &[data-slam-available="false"]{
+    .slam-button {
+      display: none;
+    }
+  }
+  &:not([data-slam-available="gifting"]){
+    .slam-gift-button {
+      display: none;
+    }
+  }
+}
+
+.table{
+  .card-slot[data-slot-status="empty"],
+  [data-cabo="called"] {
+    .card-controls {
+      display: none;
+    }
+  }
+  &[data-cabo="called"],
+  &[data-cabo="results"] {
+    .cabo-button {
+      display: none;
+    }
+  }
+  &[data-cabo="results"] {
+    .card-controls,
+    .take-card-button {
+      display: none;
+    }
+  }
+  .king-see-own-radio,
+  .king-see-theirs-radio,
+  .see-own-button,
+  .see-theirs-button,
+  .discard-button,
+  .swap-deck-button,
+  .blind-swap-radio,
+  .blind-swap-button {
+    display: none;
+  }
+  &[data-your-turn="false"]{
+    .take-deck-button,
+    .cabo-button,
+    .swap-discard-button,
+    .discard-button {
+      display: none;
+    }
+  }
+  &[data-picked-from-deck="true"]{
+    .swap-discard-button,
+    .take-deck-button,
+    .cabo-button {
+      display: none;
+    }
+    .swap-deck-button,
+    .discard-button {
+      display: block;
+    }
+  }
+
+  &[data-special-move="blind-swap"],
+  &[data-special-move="king-swap"]
+  {
+    .take-deck-button,
+    .swap-discard-button {
+      display: none;
+    }
+    .blind-swap-radio {
+      display: block;
+    }
+  }
+
+  &[data-special-move="king-see"]{
+    .king-see-own-radio,
+    .king-see-theirs-radio {
+      display: block;
+    }
+  }
+
+  &[data-special-move="see-own"] {
+    .take-deck-button,
+    .swap-discard-button {
+      display: none;
+    }
+    .see-own-button {
+      display: block;
+    }
+  }
+
+  &[data-special-move="see-theirs"] {
+    .take-deck-button,
+    .swap-discard-button {
+      display: none;
+    }
+    .see-theirs-button {
+      display: block;
+    }
+  }
+}
+
+@keyframes card-swapped{
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  40% {
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}

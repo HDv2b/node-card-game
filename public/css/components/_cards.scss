@@ -1,0 +1,231 @@
+%card {
+  width: 140px;
+  height: 190px;
+  display: block;
+  background-image: url(/img/cards-linear.png);
+  background-repeat: no-repeat;
+}
+
+.sprite {
+  @extend %card;
+}
+
+[data-slot-status="card-empty"]{
+  @extend %card;
+}
+
+.sprite-cardBack_blue3 {
+  background-position: 0 0;
+}
+
+[card-front="Clubs10"] {
+  background-position: -140px 0;
+}
+
+[card-front="Clubs2"] {
+  background-position: -280px 0;
+}
+
+[card-front="Clubs3"] {
+  background-position: -420px 0;
+}
+
+[card-front="Clubs4"] {
+  background-position: -560px 0;
+}
+
+[card-front="Clubs5"] {
+  background-position: -700px 0;
+}
+
+[card-front="Clubs6"] {
+  background-position: -840px 0;
+}
+
+[card-front="Clubs7"] {
+  background-position: -980px 0;
+}
+
+[card-front="Clubs8"] {
+  background-position: -1120px 0;
+}
+
+[card-front="Clubs9"] {
+  background-position: -1260px 0;
+}
+
+[card-front="ClubsA"] {
+  background-position: -1400px 0;
+}
+
+[card-front="ClubsJ"] {
+  background-position: -1540px 0;
+}
+
+[card-front="ClubsK"] {
+  background-position: -1680px 0;
+}
+
+[card-front="ClubsQ"] {
+  background-position: -1820px 0;
+}
+
+[card-front="Diamonds10"] {
+  background-position: -1960px 0;
+}
+
+[card-front="Diamonds2"] {
+  background-position: -2100px 0;
+}
+
+[card-front="Diamonds3"] {
+  background-position: -2240px 0;
+}
+
+[card-front="Diamonds4"] {
+  background-position: -2380px 0;
+}
+
+[card-front="Diamonds5"] {
+  background-position: -2520px 0;
+}
+
+[card-front="Diamonds6"] {
+  background-position: -2660px 0;
+}
+
+[card-front="Diamonds7"] {
+  background-position: -2800px 0;
+}
+
+[card-front="Diamonds8"] {
+  background-position: -2940px 0;
+}
+
+[card-front="Diamonds9"] {
+  background-position: -3080px 0;
+}
+
+[card-front="DiamondsA"] {
+  background-position: -3220px 0;
+}
+
+[card-front="DiamondsJ"] {
+  background-position: -3360px 0;
+}
+
+[card-front="DiamondsK"] {
+  background-position: -3500px 0;
+}
+
+[card-front="DiamondsQ"] {
+  background-position: -3640px 0;
+}
+
+[card-front="Hearts10"] {
+  background-position: -3780px 0;
+}
+
+[card-front="Hearts2"] {
+  background-position: -3920px 0;
+}
+
+[card-front="Hearts3"] {
+  background-position: -4060px 0;
+}
+
+[card-front="Hearts4"] {
+  background-position: -4200px 0;
+}
+
+[card-front="Hearts5"] {
+  background-position: -4340px 0;
+}
+
+[card-front="Hearts6"] {
+  background-position: -4480px 0;
+}
+
+[card-front="Hearts7"] {
+  background-position: -4620px 0;
+}
+
+[card-front="Hearts8"] {
+  background-position: -4760px 0;
+}
+
+[card-front="Hearts9"] {
+  background-position: -4900px 0;
+}
+
+[card-front="HeartsA"] {
+  background-position: -5040px 0;
+}
+
+[card-front="HeartsJ"] {
+  background-position: -5180px 0;
+}
+
+[card-front="HeartsK"] {
+  background-position: -5320px 0;
+}
+
+[card-front="HeartsQ"] {
+  background-position: -5460px 0;
+}
+
+[card-front="Joker"] {
+  background-position: -5600px 0;
+}
+
+[card-front="Spades10"] {
+  background-position: -5740px 0;
+}
+
+[card-front="Spades2"] {
+  background-position: -5880px 0;
+}
+
+[card-front="Spades3"] {
+  background-position: -6020px 0;
+}
+
+[card-front="Spades4"] {
+  background-position: -6160px 0;
+}
+
+[card-front="Spades5"] {
+  background-position: -6300px 0;
+}
+
+[card-front="Spades6"] {
+  background-position: -6440px 0;
+}
+
+[card-front="Spades7"] {
+  background-position: -6580px 0;
+}
+
+[card-front="Spades8"] {
+  background-position: -6720px 0;
+}
+
+[card-front="Spades9"] {
+  background-position: -6860px 0;
+}
+
+[card-front="SpadesA"] {
+  background-position: -7000px 0;
+}
+
+[card-front="SpadesJ"] {
+  background-position: -7140px 0;
+}
+
+[card-front="SpadesK"] {
+  background-position: -7280px 0;
+}
+
+[card-front="SpadesQ"] {
+  background-position: -7420px 0;
+}
