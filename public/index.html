@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Node Card Game Engine Demo: Blinds - Hussein Duvigneau, NotMyBase.com</title>
+        <link rel="stylesheet" href="/css/style.css">
+    </head>
+    <body>
+<!--        <header>
+
+        </header>-->
+        <div class="table">
+            <div class="player-area opponent-area">
+                <div class="opponent name-tag">Opponent</div>
+                <div class="hand"></div>
+            </div>
+            <div class="middle-area">
+                <div class="deck">
+                    <button class="take-deck-button">Take Card</button>
+                    <div class="drawn-card" data-slot-status="empty"></div>
+                </div>
+                <div class="discard-pile">
+                    <button class="discard-button">Discard</button>
+                </div>
+                <div class="middle-controls">
+                    <button class="cabo-button">"Cabo!"</button>
+                </div>
+            </div>
+            <div class="player-area my-area">
+                <div class="hand"></div>
+                <div class="player name-tag">You</div>
+            </div>
+        </div>
+        <div id="tips-box" class="tips-box">
+
+        </div>
+        <table id="helper-card-values">
+            <tr>
+                <td>Joker</td><td>-1</td>
+            </tr>
+            <tr>
+                <td>Red King</td><td>0</td>
+            </tr>
+            <tr>
+                <td>Ace</td><td>1</td>
+            </tr>
+            <tr>
+                <td>2-10</td><td>2-10</td>
+            </tr>
+            <tr>
+                <td>Jack</td><td>11</td>
+            </tr>
+            <tr>
+                <td>Queen</td><td>12</td>
+            </tr>
+            <tr>
+                <td>Black King</td><td>13</td>
+            </tr>
+        </table>
+        <table id="helper-card-specials">
+            <tr>
+                <td>7/8</td><td>Look at own</td>
+            </tr>
+            <tr>
+                <td>9/10</td><td>Look at theirs</td>
+            </tr>
+            <tr>
+                <td>J/Q</td><td>Blind swap</td>
+            </tr>
+            <tr>
+                <td>Black K</td><td>Look &amp; swap</td>
+            </tr>
+        </table>
+<!--        <footer>
+            <a href="http://notmybase.com" target="_blank">Hussein Duvigneau</a>
+        </footer>-->
+
+        <script type="text/template" id="their-card-slot-template">
+            <div class="card-slot" data-slot-status="SLOT_STATUS" data-slot-number="SLOT_NUMBER">
+                <div class="card"></div>
+                <div class="card-controls">
+                    <button class="slam-button">Slam</button>
+                    <button class="see-theirs-button">Peek</button>
+                    <label class="blind-swap-radio">Swap <input type="radio" name="blind-swap-theirs" value="SLOT_NUMBER"/></label>
+                    <label class="king-see-theirs-radio">Peek <input type="radio" name="king-see-theirs" value="SLOT_NUMBER"/></label>
+                </div>
+            </div>
+
+        </script>
+        <script type="text/template" id="own-card-slot-template">
+            <div class="card-slot" data-slot-status="SLOT_STATUS" data-slot-number="SLOT_NUMBER">
+                <div class="card"></div>
+                <div class="card-controls">
+                    <button class="swap-discard-button">Swap with <span class="discard-card-string">SWAP_WITH</span></button>
+                    <button class="swap-deck-button">Swap with <span class="deck-card-string"></span></button>
+                    <button class="slam-button">Slam</button>
+                    <button class="see-own-button">Peek</button>
+                    <label class="blind-swap-radio">Swap <input type="radio" name="blind-swap-own" value="SLOT_NUMBER"/></label>
+                    <button class="slam-gift-button">Gift</button>
+                    <label class="king-see-own-radio">Peek <input type="radio" name="king-see-own" value="SLOT_NUMBER"/></label>
+                </div>
+            </div>
+        </script>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.3/jquery.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="/js/app.js"></script>
+    </body>
+</html>
