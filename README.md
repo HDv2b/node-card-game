@@ -13,7 +13,8 @@ The demo is a popular card game amongst backpackers around South East Asia. Over
 
 This [Google Doc](https://goo.gl/WvefUO) explains the rules for which this game is programmed to play.
 
-# Prototype Roadmap in approximate chronological order.
+# Prototype Roadmap
+In approximate chronological order:
 * Playable demo with 2 players playing Cabo, dealt a fixed amount of cards
 * Client to display game using standard DOM. Maybe persuaded to switch to canvas later but for now I feel like it's overkill. Layout to work across screen sizes.
 * Tidy up and refactor, ensure complete separation of library and game rules on server and layout from communication layer on client side.
