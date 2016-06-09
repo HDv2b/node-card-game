@@ -19,6 +19,7 @@ In approximate chronological order:
 * Client to display game using standard DOM. Maybe persuaded to switch to canvas later but for now I feel like it's overkill. Layout to work across screen sizes. Cards to be visible in 4 states; face-down, face-up, in-hand and empty-slot.
 * Tidy up and refactor, ensure complete separation of library and game rules on server and layout from communication layer on client side.
 * Allow players to reset game and start again.
+
 -- Launch publicly available showcase
 * Multiple players
 * Allow for variations to be determined by game host (ie number of cards to be initially dealt.
