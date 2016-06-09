@@ -1,0 +1,24 @@
+{
+  "name": "node-card-game",
+  "version": "0.0.1",
+  "description": "Card game library for node",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ElGoorf/node-card-game.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ElGoorf/node-card-game/issues"
+  },
+  "homepage": "https://github.com/ElGoorf/node-card-game#readme",
+  "main": "index.js",
+  "dependencies": {
+    "express": "^4.10.2",
+    "socket.io": "^1.3.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Hussein Duvigneau <hussein+nodecards@notmybase.com> (http://notmybase.com)",
+  "license": "MIT"
+}

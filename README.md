@@ -1,2 +1,2 @@
 # node-card-game
-Multiplayer card game template with node
+Multiplayer card game library with node
