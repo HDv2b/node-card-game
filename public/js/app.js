@@ -235,9 +235,10 @@ socket.on('you-kept', function(slot){
     console.log('You kept and placed in slot '+slot);
 });
 
-socket.on('you-slam-success', function(data){
-    console.log("You successfully slammed a "+cardToString(data.card)+" from slot "+data.slot);
-    $myHand.find("[data-slot-number='"+data.slot+"']").attr("data-slot-status","empty");
+socket.on('slam-success', function(data){
+    console.log("Player"+data.slammer+" successfully slammed a "+cardToString(data.card)+" from Player "+data.handOwner+"'s slot "+data.slot);
+    let $hand = $table.find(".hand[data-player-id='"+data.handOwner+"']");
+    $hand.find("[data-slot-number='"+data.slot+"']").attr("data-slot-status","empty");
     $discardPile.attr("card-front",cardToAttr(data.card));
     $(".discard-card-string").text(cardToString(data.card));
     $table.attr("data-slam-available","false");
@@ -248,14 +249,6 @@ socket.on('you-slam-fail', function(data){
     addCardSlotToOwnHand(data.newCardSlot,{
         slotStatus : "card-back"
     });
-});
-
-socket.on('they-slam-success', function(data){
-    console.log("Opponent successfully slammed a "+cardToString(data.card)+" from slot "+data.slot);
-    $opponentHand.find("[data-slot-number='"+data.slot+"']").attr("data-slot-status","empty");
-    $discardPile.attr("card-front",cardToAttr(data.card));
-    $(".discard-card-string").text(cardToString(data.card));
-    $table.attr("data-slam-available","false");
 });
 
 socket.on('they-slam-fail', function(data){
@@ -345,7 +338,8 @@ $myHand.on("click",".slam-button",function(){
 $opponentHand.on("click",".slam-button",function(){
     let $this = $(this);
     let slotClicked = $this.closest(".card-slot").attr("data-slot-number");
-    slamTheirs(slotClicked);
+    let handOwner = $this.closest(".hand").attr("data-player-id");
+    slam(handOwner,slotClicked);
 });
 
 $myHand.on("click",".swap-discard-button",function(){
@@ -456,12 +450,12 @@ function discard(){
     socket.emit("turn-action",{action:"discard"});
 }
 
-function slamOwn(n){
-    socket.emit("turn-action",{action:"slam",slot:n,self:true});
+function slamOwn(slot){
+    slam(ownId,slot);
 }
 
-function slamTheirs(n){
-    socket.emit("turn-action",{action:"slam",slot:n,self:false});
+function slam(player,slot){
+    socket.emit("turn-action",{action:"slam",slot:slot,handOwner:player});
 }
 
 function blindSwap(mine,theirs){

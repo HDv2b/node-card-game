@@ -48,6 +48,7 @@ module.exports = class Cabo extends Game {
         var playerTurn = 0;
         var discardPile;
         var caboCalled = false;
+        var slamAvailable = false;
 
         function endTurn() {
             slamAvailable = true;
@@ -110,279 +111,273 @@ module.exports = class Cabo extends Game {
                     discardPile = [turnedCard];
                 }
             });
-
-            var slamAvailable = true;
             thisPlayer.lookingAtCard = false;
             thisPlayer.specialMove = false;
             thisPlayer.socket.on("turn-action", function (data) {
                 /*
                  Players can slam out of turn, as long as a slam hasn't already been done since the last pick-up.
-                  */
-                if (data.action == "slam") {
-                    if (slamAvailable) {
-                        console.log("==================================");
-                        console.log("=           SLAM EVENT           =");
-                        console.log("==================================");
-                        let slamCard = data.self ?
-                            thisPlayer.hands["table"].cards[data.slot] :
-                            opponentPlayer.hands["table"].cards[data.slot];
-                        console.log("Player " + player + " has slammed a " + slamCard.toString());
-                        console.log("Card to match is a " + discardPile[discardPile.length - 1]);
-                        if (slamCard.value == discardPile[discardPile.length - 1].value) {
-                            console.log("Match!");
-                            /*
-                             take card from slot to discard pile
-                             */
-                            discardPile.push(slamCard);
-                            if (data.self) {
-                                delete thisPlayer.hands["table"].cards[data.slot];
-                            } else {
-                                delete opponentPlayer.hands["table"].cards[data.slot];
-                            }
-                            thisPlayer.socket.emit("you-slam-success", {
-                                self: data.self,
-                                slot: data.slot,
-                                card: slamCard
-                            });
-                            opponentPlayer.socket.emit("they-slam-success", {
-                                self: data.self,
-                                slot: data.slot,
-                                card: slamCard
-                            });
-                            slamAvailable = false;
-                        } else {
-                            console.log("Denied!");
-                            /*
-                             If cards don't match, punishment is player gets a card drawn and placed in their hand in an available slot, making a new one if no slot is empty.
-                             */
-
-                            // first, find an available slot
-                            var emptySlot = 0;
-                            while (typeof (thisPlayer.hands["table"].cards[emptySlot]) !== "undefined") {
-                                emptySlot++;
-                            }
-
-                            thisPlayer.hands["table"].cards[emptySlot] = deck.drawCard();
-
-                            thisPlayer.socket.emit("you-slam-fail", {
-                                slot: data.slot,
-                                card: slamCard,
-                                newCardSlot: emptySlot
-                            });
-
-                            opponentPlayer.socket.emit("they-slam-fail", {
-                                slot: data.slot,
-                                card: slamCard,
-                                newCardSlot: emptySlot
-                            });
-                        }
-                        console.log("Player " + player + "'s hand is now: " + cardsToString(thisPlayer.hands["table"].cards));
-
-
-                    } else {
-                        console.log("Slam unavailable");
-                    }
-                } else if (data.action == "slam-gift" ) {
-                                        
-                } else if (playerTurn == player) {
-                    console.log("==================================");
-                    console.log("=           Turn Taken           =");
-                    console.log("==================================");
-                    switch (data.action) {
-                        case "take-from-discards":
-                            /*
-                             Player takes card from discard pile, swapping it for one of their own
-                             */
-                            let swappedOut = thisPlayer.hands["table"].cards[data.slot];
-                            let pickedUp = discardPile.splice(-1, 1, swappedOut)[0];
-
-                            thisPlayer.hands["table"].cards[data.slot] = pickedUp;
-
-                            console.log("Player picked up " + pickedUp.toString() + ", placing in slot " + data.slot + ", discarding " + swappedOut.toString() + ")");
-                            console.log("Player "+player+"'s hand is now: "+thisPlayer.hands["table"].cards);
-
-                            io.emit('discarded', swappedOut);
-
-                            endTurn();
-                            break;
-
-
-                        case "take-from-deck":
-                            /*
-                             Player takes card from deck, and looks at it
-                             */
-
-                            thisPlayer.lookingAtCard = deck.drawCard();
-                            console.log("Player " + player + " is taking from the deck: ", thisPlayer.lookingAtCard.toString());
-                            thisPlayer.socket.emit("card-drawn", {
-                                card: thisPlayer.lookingAtCard,
-                                from: "deck"
-                            });
-                            opponentPlayer.socket.emit("opponent-card-drawn");
-                            break;
-                        case "keep":
-                            /*
-                             If player keeps a card, they must swap with with an existing card, and then the turn ends.
-                             */
-
-                            if (thisPlayer.lookingAtCard) {
-                                // replace card in slot with one currently being looked at
-                                let oldCard = thisPlayer.hands["table"].cards.splice(data.slot, 1, thisPlayer.lookingAtCard)[0];
-
-                                // discard old card onto top of discard pile
-                                discardPile.push(thisPlayer.lookingAtCard);
-
-                                // player is no longer looking at a card.
-                                thisPlayer.lookingAtCard = false;
-
-                                console.log("Player " + player + " kept the card and placed it into slot " + data.slot + ".");
-                                console.log("Top discarded card is now "+oldCard);
-
-                                thisPlayer.socket.emit("you-kept",data.slot);
-                                opponentPlayer.socket.emit("they-kept",data.slot);
-                                io.emit("discarded", oldCard);
-
-                                console.log("Player "+player+"'s hand is now: "+cardsToString(thisPlayer.hands["table"].cards));
-
-                                endTurn();
-                            } else {
-                                console.log("ERROR: player trying to keep non-existant card");
-                                thisPlayer.socket.emit("error", {msg: "Trying to keep non-existant card"});
-                            }
-                            break;
-                        case "discard":
-                            /*
-                             If player discards straight form pick-up, player may get to perform a special action, depending on the card value.
-                             If the card doesn't have a special value, end turn as usual.
-                             */
-
-                            if (thisPlayer.lookingAtCard) {
-
-                                // throw card down
-                                discardPile.push(thisPlayer.lookingAtCard);
-
-                                console.log("Player " + player + " discarded his picked up card");
-                                console.log("Top discarded card is now ", discardPile[discardPile.length - 1]);
-
-                                io.emit("discarded", thisPlayer.lookingAtCard);
-
-                                // player is no longer looking at a card
-                                thisPlayer.lookingAtCard = false;
-
-                                // special actions depending on card value
-                                switch (discardPile[discardPile.length - 1].value) {
-                                    case 7:
-                                    case 8:
-                                        console.log("7/8: look at own.");
-                                        thisPlayer.specialMove = "see own";
-                                        thisPlayer.socket.emit("special-move","see-own");
-                                        break;
-                                    case 9:
-                                    case 10:
-                                        console.log("9/10: look at theirs.");
-                                        thisPlayer.specialMove = "see theirs";
-                                        thisPlayer.socket.emit("special-move","see-theirs");
-                                        break;
-                                    case JACK:
-                                    case QUEEN:
-                                        console.log("J/Q: blind swap.");
-                                        thisPlayer.specialMove = "blind swap";
-                                        thisPlayer.socket.emit("special-move","blind-swap");
-                                        break;
-                                    case KING:
-                                        if (discardPile[discardPile.length - 1].color == BLACK) {
-                                            console.log("Black King: look and swap.");
-                                            thisPlayer.socket.emit("special-move","king-see");
-                                            thisPlayer.specialMove = "king see";
-                                        } else {
-                                            endTurn();
-                                        }
-                                        break;
-                                    default:
-                                        endTurn();
-                                        break;
-                                }
-                            } else {
-                                console.log("ERROR: player trying to discard non-existant card");
-                                thisPlayer.socket.emit("error", {msg: "Tried to discard a non-existant card"});
-                            }
-                            break;
-                        // Special Moves
-                        case "see-own":
-                            if(thisPlayer.specialMove == "see own"){
-                                let card = thisPlayer.hands["table"].cards[data.slot];
-                                console.log("Player "+player+" has revealed "+card+" in own slot "+data.slot);
-                                thisPlayer.socket.emit("seen-own",{card:card,slot:data.slot});
-
-                                thisPlayer.specialMove = false;
-                                endTurn();
-                            }
-                            break;
-                        case "see-theirs":
-                            if(thisPlayer.specialMove == "see theirs"){
-                                let card = opponentPlayer.hands["table"].cards[data.slot];
-                                console.log("Player "+player+" has revealed "+card+" in opponent's slot "+data.slot);
-                                thisPlayer.socket.emit("seen-theirs",{card:card,slot:data.slot});
-                                thisPlayer.specialMove = false;
-                                endTurn();
-                            }
-                            break;
-                        case "blind-swap":
-                            if(thisPlayer.specialMove == "blind swap" || thisPlayer.specialMove == "king swap"){
-                                let ownCard = thisPlayer.hands["table"].cards[data.ownSlot];
-                                let theirCard = opponentPlayer.hands["table"].cards[data.theirSlot];
-
-                                thisPlayer.hands["table"].cards[data.ownSlot] = theirCard;
-                                opponentPlayer.hands["table"].cards[data.ownSlot] = ownCard;
-
-                                console.log("Player "+player+" has swapped their "+ownCard+" in slot "+data.ownSlot+" for opponent's "+theirCard+" in slot "+data.theirSlot+".");
-
-                                console.log("Player "+player+"'s hand is now: "+cardsToString(thisPlayer.hands["table"].cards));
-                                console.log("Player "+(1-player)+"'s hand is now: "+cardsToString(opponentPlayer.hands["table"].cards));
-
-                                thisPlayer.socket.emit("blind-swapped",{ownSlot: data.ownSlot, theirSlot:data.theirSlot});
-                                opponentPlayer.socket.emit("blind-swapped",{ownSlot: data.theirSlot, theirSlot:data.ownSlot});
-                                thisPlayer.specialMove = false;
-
-                                endTurn();
-                            }
-                            break;
-                        case "king-see":
-                            if(thisPlayer.specialMove == "king see") {
-                                let ownCard = thisPlayer.hands["table"].cards[data.ownSlot];
-                                let theirCard = opponentPlayer.hands["table"].cards[data.theirSlot];
-
-                                console.log("Player "+player+" has seen their "+ownCard+" in slot "+data.ownSlot+" and opponent's "+theirCard+" in slot "+data.theirSlot+".");
-
-                                thisPlayer.socket.emit("king-seen",{
-                                    ownSlot: data.ownSlot,
-                                    theirSlot: data.theirSlot,
-                                    ownCard: ownCard,
-                                    theirCard: theirCard
+                 */
+                switch(data.action){
+                    case "slam":
+                        if (slamAvailable) {
+                            console.log("==================================");
+                            console.log("=           SLAM EVENT           =");
+                            console.log("==================================");
+                            let slamCard = players[data.handOwner].hands["table"].cards[data.slot];
+                            console.log("Player " + player + " has slammed a " + slamCard.toString());
+                            console.log("Card to match is a " + discardPile[discardPile.length - 1]);
+                            if (slamCard.value == discardPile[discardPile.length - 1].value) {
+                                console.log("Match!");
+                                /*
+                                 take card from slot to discard pile
+                                 */
+                                discardPile.push(slamCard);
+                                delete players[data.handOwner].hands["table"].cards[data.slot];
+                                io.emit("slam-success", {
+                                    slammer: player,
+                                    handOwner: data.handOwner,
+                                    slot: data.slot,
+                                    card: slamCard
                                 });
+                                slamAvailable = false;
+                            } else {
+                                console.log("Denied!");
+                                /*
+                                 If cards don't match, punishment is player gets a card drawn and placed in their hand in an available slot, making a new one if no slot is empty.
+                                 */
 
-                                thisPlayer.specialMove = "king swap";
+                                // first, find an available slot
+                                var emptySlot = 0;
+                                while (typeof (thisPlayer.hands["table"].cards[emptySlot]) !== "undefined") {
+                                    emptySlot++;
+                                }
+
+                                thisPlayer.hands["table"].cards[emptySlot] = deck.drawCard();
+
+                                io.emit("slam-fail", {
+                                    slammer: player,
+                                    handOwner: data.handOwner,
+                                    slot: data.slot,
+                                    card: slamCard,
+                                    newCardSlot: emptySlot
+                                });
                             }
-                            break;
-                        case "skip-special":
-                            if(thisPlayer.specialMove){
-                                thisPlayer.specialMove = false;
+                            console.log("Player " + player + "'s hand is now: " + cardsToString(thisPlayer.hands["table"].cards));
+                        } else {
+                            console.log("Slam unavailable");
+                        }
+                        break;
+                    case "slam-gift":
+                        break;
+
+                    default:
+                        if (playerTurn == player) {
+                        console.log("==================================");
+                        console.log("=           Turn Taken           =");
+                        console.log("==================================");
+                        switch (data.action) {
+                            case "take-from-discards":
+                                /*
+                                 Player takes card from discard pile, swapping it for one of their own
+                                 */
+                                let swappedOut = thisPlayer.hands["table"].cards[data.slot];
+                                let pickedUp = discardPile.splice(-1, 1, swappedOut)[0];
+
+                                thisPlayer.hands["table"].cards[data.slot] = pickedUp;
+
+                                console.log("Player picked up " + pickedUp.toString() + ", placing in slot " + data.slot + ", discarding " + swappedOut.toString() + ")");
+                                console.log("Player " + player + "'s hand is now: " + thisPlayer.hands["table"].cards);
+
+                                io.emit('discarded', swappedOut);
+
                                 endTurn();
-                            }
-                            break;
-                        case "cabo":
-                            if(!caboCalled) {
-                                caboCalled = true;
-                                players[playerTurn].caboCalled = true;
-                                console.log("Player "+playerTurn+" has called cabo.");
-                                io.emit("cabo",playerTurn);
-                                endTurn();
-                            }
-                            break;
-                    }
-                } else {
-                    thisPlayer.socket.emit("denied", {msg: "Not your turn!"});
+                                break;
+
+
+                            case "take-from-deck":
+                                /*
+                                 Player takes card from deck, and looks at it
+                                 */
+
+                                thisPlayer.lookingAtCard = deck.drawCard();
+                                console.log("Player " + player + " is taking from the deck: ", thisPlayer.lookingAtCard.toString());
+                                thisPlayer.socket.emit("card-drawn", {
+                                    card: thisPlayer.lookingAtCard,
+                                    from: "deck"
+                                });
+                                opponentPlayer.socket.emit("opponent-card-drawn");
+                                break;
+                            case "keep":
+                                /*
+                                 If player keeps a card, they must swap with with an existing card, and then the turn ends.
+                                 */
+
+                                if (thisPlayer.lookingAtCard) {
+                                    // replace card in slot with one currently being looked at
+                                    let oldCard = thisPlayer.hands["table"].cards.splice(data.slot, 1, thisPlayer.lookingAtCard)[0];
+
+                                    // discard old card onto top of discard pile
+                                    discardPile.push(thisPlayer.lookingAtCard);
+
+                                    // player is no longer looking at a card.
+                                    thisPlayer.lookingAtCard = false;
+
+                                    console.log("Player " + player + " kept the card and placed it into slot " + data.slot + ".");
+                                    console.log("Top discarded card is now " + oldCard);
+
+                                    thisPlayer.socket.emit("you-kept", data.slot);
+                                    opponentPlayer.socket.emit("they-kept", data.slot);
+                                    io.emit("discarded", oldCard);
+
+                                    console.log("Player " + player + "'s hand is now: " + cardsToString(thisPlayer.hands["table"].cards));
+
+                                    endTurn();
+                                } else {
+                                    console.log("ERROR: player trying to keep non-existant card");
+                                    thisPlayer.socket.emit("error", {msg: "Trying to keep non-existant card"});
+                                }
+                                break;
+                            case "discard":
+                                /*
+                                 If player discards straight form pick-up, player may get to perform a special action, depending on the card value.
+                                 If the card doesn't have a special value, end turn as usual.
+                                 */
+
+                                if (thisPlayer.lookingAtCard) {
+
+                                    // throw card down
+                                    discardPile.push(thisPlayer.lookingAtCard);
+
+                                    console.log("Player " + player + " discarded his picked up card");
+                                    console.log("Top discarded card is now ", discardPile[discardPile.length - 1]);
+
+                                    io.emit("discarded", thisPlayer.lookingAtCard);
+
+                                    // player is no longer looking at a card
+                                    thisPlayer.lookingAtCard = false;
+
+                                    // special actions depending on card value
+                                    switch (discardPile[discardPile.length - 1].value) {
+                                        case 7:
+                                        case 8:
+                                            console.log("7/8: look at own.");
+                                            thisPlayer.specialMove = "see own";
+                                            thisPlayer.socket.emit("special-move", "see-own");
+                                            break;
+                                        case 9:
+                                        case 10:
+                                            console.log("9/10: look at theirs.");
+                                            thisPlayer.specialMove = "see theirs";
+                                            thisPlayer.socket.emit("special-move", "see-theirs");
+                                            break;
+                                        case JACK:
+                                        case QUEEN:
+                                            console.log("J/Q: blind swap.");
+                                            thisPlayer.specialMove = "blind swap";
+                                            thisPlayer.socket.emit("special-move", "blind-swap");
+                                            break;
+                                        case KING:
+                                            if (discardPile[discardPile.length - 1].color == BLACK) {
+                                                console.log("Black King: look and swap.");
+                                                thisPlayer.socket.emit("special-move", "king-see");
+                                                thisPlayer.specialMove = "king see";
+                                            } else {
+                                                endTurn();
+                                            }
+                                            break;
+                                        default:
+                                            endTurn();
+                                            break;
+                                    }
+                                } else {
+                                    console.log("ERROR: player trying to discard non-existant card");
+                                    thisPlayer.socket.emit("error", {msg: "Tried to discard a non-existant card"});
+                                }
+                                break;
+                            // Special Moves
+                            case "see-own":
+                                if (thisPlayer.specialMove == "see own") {
+                                    let card = thisPlayer.hands["table"].cards[data.slot];
+                                    console.log("Player " + player + " has revealed " + card + " in own slot " + data.slot);
+                                    thisPlayer.socket.emit("seen-own", {card: card, slot: data.slot});
+
+                                    thisPlayer.specialMove = false;
+                                    endTurn();
+                                }
+                                break;
+                            case "see-theirs":
+                                if (thisPlayer.specialMove == "see theirs") {
+                                    let card = opponentPlayer.hands["table"].cards[data.slot];
+                                    console.log("Player " + player + " has revealed " + card + " in opponent's slot " + data.slot);
+                                    thisPlayer.socket.emit("seen-theirs", {card: card, slot: data.slot});
+                                    thisPlayer.specialMove = false;
+                                    endTurn();
+                                }
+                                break;
+                            case "blind-swap":
+                                if (thisPlayer.specialMove == "blind swap" || thisPlayer.specialMove == "king swap") {
+                                    let ownCard = thisPlayer.hands["table"].cards[data.ownSlot];
+                                    let theirCard = opponentPlayer.hands["table"].cards[data.theirSlot];
+
+                                    thisPlayer.hands["table"].cards[data.ownSlot] = theirCard;
+                                    opponentPlayer.hands["table"].cards[data.ownSlot] = ownCard;
+
+                                    console.log("Player " + player + " has swapped their " + ownCard + " in slot " + data.ownSlot + " for opponent's " + theirCard + " in slot " + data.theirSlot + ".");
+
+                                    console.log("Player " + player + "'s hand is now: " + cardsToString(thisPlayer.hands["table"].cards));
+                                    console.log("Player " + (1 - player) + "'s hand is now: " + cardsToString(opponentPlayer.hands["table"].cards));
+
+                                    thisPlayer.socket.emit("blind-swapped", {
+                                        ownSlot: data.ownSlot,
+                                        theirSlot: data.theirSlot
+                                    });
+                                    opponentPlayer.socket.emit("blind-swapped", {
+                                        ownSlot: data.theirSlot,
+                                        theirSlot: data.ownSlot
+                                    });
+                                    thisPlayer.specialMove = false;
+
+                                    endTurn();
+                                }
+                                break;
+                            case "king-see":
+                                if (thisPlayer.specialMove == "king see") {
+                                    let ownCard = thisPlayer.hands["table"].cards[data.ownSlot];
+                                    let theirCard = opponentPlayer.hands["table"].cards[data.theirSlot];
+
+                                    console.log("Player " + player + " has seen their " + ownCard + " in slot " + data.ownSlot + " and opponent's " + theirCard + " in slot " + data.theirSlot + ".");
+
+                                    thisPlayer.socket.emit("king-seen", {
+                                        ownSlot: data.ownSlot,
+                                        theirSlot: data.theirSlot,
+                                        ownCard: ownCard,
+                                        theirCard: theirCard
+                                    });
+
+                                    thisPlayer.specialMove = "king swap";
+                                }
+                                break;
+                            case "skip-special":
+                                if (thisPlayer.specialMove) {
+                                    thisPlayer.specialMove = false;
+                                    endTurn();
+                                }
+                                break;
+                            case "cabo":
+                                if (!caboCalled) {
+                                    caboCalled = true;
+                                    players[playerTurn].caboCalled = true;
+                                    console.log("Player " + playerTurn + " has called cabo.");
+                                    io.emit("cabo", playerTurn);
+                                    endTurn();
+                                }
+                                break;
+                        }
+                    } else {
+                        thisPlayer.socket.emit("denied", {msg: "Not your turn!"});
+                        break;
                 }
+            }
             });
         }
     }
