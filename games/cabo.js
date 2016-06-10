@@ -317,23 +317,21 @@ module.exports = class Cabo extends Game {
                             case "blind-swap":
                                 if (thisPlayer.specialMove == "blind swap" || thisPlayer.specialMove == "king swap") {
                                     let ownCard = thisPlayer.hands["table"].cards[data.ownSlot];
+                                    let opponentPlayer = players[data.handOwner];
                                     let theirCard = opponentPlayer.hands["table"].cards[data.theirSlot];
 
                                     thisPlayer.hands["table"].cards[data.ownSlot] = theirCard;
                                     opponentPlayer.hands["table"].cards[data.ownSlot] = ownCard;
 
-                                    console.log("Player " + player + " has swapped their " + ownCard + " in slot " + data.ownSlot + " for opponent's " + theirCard + " in slot " + data.theirSlot + ".");
+                                    console.log("Player " + player + " has swapped their " + ownCard + " in slot " + data.ownSlot + " for Player " + data.handOwner + "'s " + theirCard + " in slot " + data.theirSlot + ".");
 
                                     console.log("Player " + player + "'s hand is now: " + cardsToString(thisPlayer.hands["table"].cards));
-                                    console.log("Player " + (1 - player) + "'s hand is now: " + cardsToString(opponentPlayer.hands["table"].cards));
+                                    console.log("Player " + data.handOwner + "'s hand is now: " + cardsToString(opponentPlayer.hands["table"].cards));
 
-                                    thisPlayer.socket.emit("blind-swapped", {
+                                    io.emit("blind-swapped", {
                                         ownSlot: data.ownSlot,
-                                        theirSlot: data.theirSlot
-                                    });
-                                    opponentPlayer.socket.emit("blind-swapped", {
-                                        ownSlot: data.theirSlot,
-                                        theirSlot: data.ownSlot
+                                        theirSlot: data.theirSlot,
+                                        handOwner: data.handOwner
                                     });
                                     thisPlayer.specialMove = false;
 

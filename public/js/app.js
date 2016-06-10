@@ -45,15 +45,17 @@ var template = {
     theirCardSlot : $("#their-card-slot-template").html()
 };
 
-function addCardSlotToOwnHand(slot,data){
-    let $thisSlot = $myHand.find("[data-slot-number='"+slot+"']");
+function addCardSlotToHand(player,slot,data){
+    let $playerHand = $("[data-player-id='"+player+"']");
+    let $thisSlot = $playerHand.find("[data-slot-number='"+slot+"']");
+    let thisTemplate = player == ownId ? template.ownCardSlot : template.theirCardSlot;
     switch($thisSlot.length){
         case 0:
-            console.log("Creating slot "+slot+" in own hand to accommodate new card...");
-            let thisNewCardSlot = template.ownCardSlot
+            console.log("Creating slot "+slot+" in hand to accommodate new card...");
+            let thisNewCardSlot = thisTemplate
                 .replace(/SLOT_NUMBER/g,slot)
                 .replace(/SLOT_STATUS/g,data.slotStatus);
-            $myHand.append(thisNewCardSlot);
+            $playerHand.append(thisNewCardSlot);
             if(topDiscard) {
                 $(".discard-card-string").html(cardToString(topDiscard));
             }
@@ -64,26 +66,6 @@ function addCardSlotToOwnHand(slot,data){
             break;
         default:
             console.log("ERROR: MULTIPLE SLOTS ASSIGNED ID "+slot+" IN OWN HAND");
-            break;
-    }
-}
-
-function addCardSlotToTheirHand(slot,data){
-    let $thisSlot = $opponentHand.find("[data-slot-number='"+slot+"']");
-    switch($thisSlot.length){
-        case 0:
-            console.log("Creating slot "+slot+" in opponent hand to accommodate new card...");
-            let thisNewCardSlot = template.theirCardSlot
-                .replace(/SLOT_NUMBER/g,slot)
-                .replace(/SLOT_STATUS/g,data.slotStatus);
-            $opponentHand.append(thisNewCardSlot);
-            break;
-        case 1:
-            $thisSlot.attr("data-slot-status",data.slotStatus);
-            break;
-            console.log("Slot "+slot+" already exists, filling...");
-        default:
-            console.log("ERROR: MULTIPLE SLOTS ASSIGNED ID "+slot+" IN OPPONENT'S HAND");
             break;
     }
 }
@@ -136,11 +118,12 @@ socket.on('cards-dealt', function(totalCards){
     $deck.attr("data-slot-status","card-back");
     $discardPile.attr("data-slot-status","slot-empty");
     let data = {
-        "slotStatus" : "card-back"
+        slotStatus : "card-back"
     };
-    for(let t = 0; t < totalCards; t++){
-        addCardSlotToOwnHand(t,data);
-        addCardSlotToTheirHand(t,data);
+    for(let p = 0; p < allPlayers.length; p++) {
+        for (let t = 0; t < totalCards; t++) {
+            addCardSlotToHand(p, t, data);
+        }
     }
 });
 
@@ -244,16 +227,9 @@ socket.on('slam-success', function(data){
     $table.attr("data-slam-available","false");
 });
 
-socket.on('you-slam-fail', function(data){
-    console.log("You unsuccessfully slammed a "+cardToString(data.card)+" from slot "+data.slot+", and now has a new card in slot "+data.newCardSlot);
-    addCardSlotToOwnHand(data.newCardSlot,{
-        slotStatus : "card-back"
-    });
-});
-
-socket.on('they-slam-fail', function(data){
-    console.log("Opponent unsuccessfully slammed a "+cardToString(data.card)+" from slot "+data.slot+", and now has a new card in slot "+data.newCardSlot);
-    addCardSlotToTheirHand(data.newCardSlot,{
+socket.on('slam-fail', function(data){
+    console.log("Player "+data.slammer+" unsuccessfully slammed a "+cardToString(data.card)+" from Player "+data.handOwner+"'s slot "+data.slot+", and now has a new card in slot "+data.newCardSlot);
+    addCardSlotToHand(data.slammer,data.newCardSlot,{
         slotStatus : "card-back"
     });
 });
@@ -384,10 +360,12 @@ $discardButton.click(function(){
 
 function initBlindSwap(){
     let ownSlot = parseInt($("[name='blind-swap-own']:checked").val());
-    let theirSlot = parseInt($("[name='blind-swap-theirs']:checked").val());
+    let $checked = $("[name='blind-swap-theirs']:checked");
+    let theirSlot = parseInt($checked.val());
+    let handOwner = $checked.closest(".hand").attr("data-player-id");
 
     if (Number.isInteger(ownSlot) && Number.isInteger(theirSlot)) {
-        blindSwap(ownSlot,theirSlot);
+        blindSwap(ownSlot,handOwner,theirSlot);
         $("[name='blind-swap-own']").prop('checked',false);
         $("[name='blind-swap-theirs']").prop('checked',false);
     }
@@ -458,8 +436,13 @@ function slam(player,slot){
     socket.emit("turn-action",{action:"slam",slot:slot,handOwner:player});
 }
 
-function blindSwap(mine,theirs){
-    socket.emit("turn-action",{action:"blind-swap",ownSlot:mine,theirSlot:theirs});
+function blindSwap(mine,handOwner,theirs){
+    socket.emit("turn-action",{
+        action:"blind-swap",
+        ownSlot:mine,
+        handOwner:handOwner,
+        theirSlot:theirs
+    });
 }
 
 function kingSee(mine,theirs){
