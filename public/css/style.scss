@@ -103,6 +103,7 @@ body {
 
 .player-area {
   height: 40%;
+  overflow-x: auto;
   .name-tag {
     font-size: 3.6em;
     text-align: center;
