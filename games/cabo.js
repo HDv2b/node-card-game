@@ -205,7 +205,14 @@ module.exports = class Cabo extends Game {
                                     card: thisPlayer.lookingAtCard,
                                     from: "deck"
                                 });
-                                opponentPlayer.socket.emit("opponent-card-drawn");
+                                for (var p = 0; p < players.length; p++)
+                                {
+                                    if(p != player) {
+                                        players[p].socket.emit("opponent-card-drawn", {
+                                            player: player
+                                        });
+                                    }
+                                }
                                 break;
                             case "keep":
                                 /*

@@ -202,11 +202,11 @@ socket.on('card-drawn', function(data){
     console.log('Drew a '+cardToString(topDiscard)+'. keep(slot) or discard()..');
 });
 
-socket.on('opponent-card-drawn',function(){
+socket.on('opponent-card-drawn',function(data){
     $deckHoldingCard.attr({
         "data-slot-status":"card-back"
     });
-    console.log('Opponent is drawing from deck...');
+    console.log('Opponent '+data.player+' is drawing from deck...');
 });
 
 socket.on('you-kept', function(slot){
