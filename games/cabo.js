@@ -16,7 +16,7 @@ const QUEEN = 12;
 const KING = 13;
 const JOKER = 14;
 
-const TOTAL_STARTING_CARDS = 8;
+const TOTAL_STARTING_CARDS = 4;
 const TOTAL_PLAYERS = 2;
 
 var Game = require('../lib/classes/Game');
