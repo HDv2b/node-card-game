@@ -16,7 +16,7 @@ const QUEEN = 12;
 const KING = 13;
 const JOKER = 14;
 
-const TOTAL_STARTING_CARDS = 4;
+const TOTAL_STARTING_CARDS = 8;
 const TOTAL_PLAYERS = 2;
 
 var Game = require('../lib/classes/Game');
@@ -55,7 +55,7 @@ module.exports = class Cabo extends Game {
             slamAvailable = true;
             if(++playerTurn == TOTAL_PLAYERS){
                 playerTurn = 0;
-            };
+            }
 
             if(!players[playerTurn].caboCalled) {
                 io.emit("new-turn", {
@@ -88,25 +88,26 @@ module.exports = class Cabo extends Game {
         for (let player = 0, l = players.length; player < l; player++) {
             let thisPlayer = players[player];
             let opponentPlayer = players[1-player];
-            let revealedCards = [
-                {
-                    slot:0,
-                    card:thisPlayer.hands['table'].cards[0]
-                },
-                {
-                    slot:2,
-                    card:thisPlayer.hands['table'].cards[2]
-                }
-            ];
+            let revealedCards = [];
 
-            console.log("Showing player " + player + " following cards: " + cardsToString(revealedCards));
+            for(let c = 0; c < TOTAL_STARTING_CARDS; c += 2){
+                revealedCards.push({
+                    slot:c,
+                    card:thisPlayer.hands['table'].cards[c]
+                })
+            }
+
+            console.log("Showing player " + player + " following cards: " + cardsToString(revealedCards.map(function(slotInfo){
+                    return slotInfo.card;
+                })));
 
             thisPlayer.socket.emit("opening-reveal", revealedCards);
 
             thisPlayer.socket.on("opening-reveal-seen", function () {
+                //todo: refctore to ensure this doesn't trigger prematurely as a result of someone sending this message twice.
                 playersReady++;
                 console.log("Player " + player + " has acknowledged his revealed cards and is ready to go.");
-                if (playersReady == 2) {
+                if (playersReady == TOTAL_PLAYERS) {
                     console.log("Both players ready...");
                     var turnedCard = deck.drawCard();
                     console.log(turnedCard.toString(), " turned from deck");
