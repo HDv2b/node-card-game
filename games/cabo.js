@@ -17,6 +17,7 @@ const KING = 13;
 const JOKER = 14;
 
 const TOTAL_STARTING_CARDS = 4;
+const TOTAL_PLAYERS = 2;
 
 var Game = require('../lib/classes/Game');
 
@@ -52,10 +53,14 @@ module.exports = class Cabo extends Game {
 
         function endTurn() {
             slamAvailable = true;
-            playerTurn = 1-playerTurn;
+            if(++playerTurn == TOTAL_PLAYERS){
+                playerTurn = 0;
+            };
+
             if(!players[playerTurn].caboCalled) {
-                players[playerTurn].socket.emit("your-turn", true);
-                players[1-playerTurn].socket.emit("their-turn", true);
+                io.emit("new-turn", {
+                    player: playerTurn
+                });
                 console.log("__________________________________");
             } else {
                 /*

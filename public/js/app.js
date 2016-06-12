@@ -161,15 +161,15 @@ socket.on('turned-first', function(card){
     console.log("First card turned...");
 });
 
-socket.on('your-turn', function(){
-    console.log("Your Turn...");
-    $table.attr("data-your-turn","true");
-});
-
-socket.on('their-turn', function(){
-    console.log("Turn ended.");
-    $table.attr("data-your-turn","false");
-    $table.attr("data-special-move","false");
+socket.on('new-turn', function(data){
+    if(data.player == ownId) {
+        console.log("Your Turn...");
+        $table.attr("data-your-turn", "true");
+    }else {
+        console.log("Player "+data.player+"'s turn.");
+        $table.attr("data-your-turn", "false");
+        $table.attr("data-special-move", "false");
+    }
 });
 
 socket.on('discarded', function(card){
