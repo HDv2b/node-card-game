@@ -1,9 +1,18 @@
 @import "components/_reset";
 @import "components/_cards";
 
-%card-revealed {
+%card-revealed-to-self {
   transform: rotateX(-20deg) scale3d(1.2, 1.2, 1);
   transform-origin: 50% 100%;
+}
+
+%card-revealed-to-opponent {
+  transform: rotateX(-40deg);
+}
+
+.card {
+  transition: transform 0.3s linear;
+  transform: none;
 }
 
 html {
@@ -33,11 +42,11 @@ body {
 
   &[data-your-turn="false"] {
     .drawn-card {
-      transform: rotateX(-40deg);
       pointer-events: none;
       position: relative;
       top: -60px;
       left: 30px;
+      @extend %card-revealed-to-opponent;
     }
   }
 
@@ -45,10 +54,9 @@ body {
     .drawn-card {
       top: 20px;
       left: 30px;
-      @extend %card-revealed;
+      @extend %card-revealed-to-self;
     }
   }
-
 }
 
 .middle-area {
@@ -103,7 +111,8 @@ body {
 
 .player-area {
   height: 40%;
-  overflow-x: auto;
+  //overflow-x: auto;
+  z-index: 2;
   .name-tag {
     font-size: 3.6em;
     text-align: center;
@@ -141,26 +150,41 @@ body {
   .card {
     width: 140px;
     height: 190px;
+    @extend .sprite;
   }
   .card-slot {
+    perspective: 500px;
+    perspective-origin: 100px 50%;
     outline-offset: 5px;
     outline: 1px grey dashed;
     border-radius: 15px;
+    &[data-slot-status="card-empty"] {
+      .card {
+        display: none;
+      }
+    }
     &[data-slot-status="card-back"] {
       .card {
-        @extend .sprite;
         @extend .sprite-cardBack_blue3;
       }
     }
     &[data-slot-status="card-front"] {
       .card {
-        @extend .sprite;
-        @extend %card-revealed;
+        @extend %card-revealed-to-self;
       }
     }
     &[data-slot-status="card-front-public"] {
       .card {
-        @extend .sprite;
+      }
+    }
+    &[data-slot-status="opponent-peeking"] {
+      .card {
+        @extend %card-revealed-to-opponent;
+      }
+    }
+    &[data-slot-status="own-peeking"] {
+      .card {
+        @extend %card-revealed-to-self;
       }
     }
   }
@@ -247,6 +271,7 @@ body {
       display: none;
     }
   }
+  .seen-button,
   .king-see-own-radio,
   .king-see-theirs-radio,
   .see-own-button,
@@ -257,6 +282,13 @@ body {
   .blind-swap-button {
     display: none;
   }
+
+  [data-slot-status="own-peeking"]{
+    .seen-button {
+      display: block;
+    }
+  }
+
   &[data-your-turn="false"]{
     .take-deck-button,
     .cabo-button,
@@ -314,26 +346,5 @@ body {
     .see-theirs-button {
       display: block;
     }
-  }
-}
-
-@keyframes card-swapped{
-  0% {
-    opacity: 0;
-  }
-  20% {
-    opacity: 1;
-  }
-  40% {
-    opacity: 0;
-  }
-  60% {
-    opacity: 1;
-  }
-  80% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
   }
 }

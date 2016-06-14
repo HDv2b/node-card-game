@@ -20,12 +20,13 @@ const TOTAL_STARTING_CARDS = 4;
 const TOTAL_PLAYERS = 2;
 
 var Game = require('../lib/classes/Game');
+var players;
 
 module.exports = class Cabo extends Game {
     commence(io) {
 
         // simply variables
-        var players = this.players;
+        players = this.players;
         var deck = this.deck;
 
         // shuffle cards
@@ -124,6 +125,11 @@ module.exports = class Cabo extends Game {
                  Players can slam out of turn, as long as a slam hasn't already been done since the last pick-up.
                  */
                 switch(data.action){
+                    case "acknowledged-revealed-cards":
+                        io.emit("player-acknowledged",{
+                            player: player
+                        });
+                        break;
                     case "slam":
                         if (slamAvailable) {
                             console.log("==================================");
@@ -211,14 +217,7 @@ module.exports = class Cabo extends Game {
                                     card: thisPlayer.lookingAtCard,
                                     from: "deck"
                                 });
-                                for (var p = 0; p < players.length; p++)
-                                {
-                                    if(p != player) {
-                                        players[p].socket.emit("opponent-card-drawn", {
-                                            player: player
-                                        });
-                                    }
-                                }
+                                sendToAllExcept(player,"opponent-card-drawn",{player:player});
                                 break;
                             case "keep":
                                 /*
@@ -312,7 +311,12 @@ module.exports = class Cabo extends Game {
                                 if (thisPlayer.specialMove == "see own") {
                                     let card = thisPlayer.hands["table"].cards[data.slot];
                                     console.log("Player " + player + " has revealed " + card + " in own slot " + data.slot);
-                                    thisPlayer.socket.emit("seen-own", {card: card, slot: data.slot});
+                                    thisPlayer.socket.emit("seen-own", {hand: player, card: card, slot: data.slot});
+                                    sendToAllExcept(player,"opponent-peeking",{
+                                        peekingPlayer: player,
+                                        hand: player,
+                                        slot: data.slot
+                                    });
 
                                     thisPlayer.specialMove = false;
                                     endTurn();
@@ -322,7 +326,14 @@ module.exports = class Cabo extends Game {
                                 if (thisPlayer.specialMove == "see theirs") {
                                     let card = opponentPlayer.hands["table"].cards[data.slot];
                                     console.log("Player " + player + " has revealed " + card + " in opponent's slot " + data.slot);
-                                    thisPlayer.socket.emit("seen-theirs", {card: card, slot: data.slot});
+                                    thisPlayer.socket.emit("seen-theirs", {hand:1-player,card: card, slot: data.slot});
+
+                                    sendToAllExcept(player,"opponent-peeking",{
+                                        peekingPlayer: player,
+                                        hand: 1-player,
+                                        slot: data.slot
+                                    });
+
                                     thisPlayer.specialMove = false;
                                     endTurn();
                                 }
@@ -360,12 +371,20 @@ module.exports = class Cabo extends Game {
 
                                     thisPlayer.socket.emit("king-seen", {
                                         ownSlot: data.ownSlot,
-                                        theirSlot: data.theirSlot,
+                                        opponentSlot: data.theirSlot,
                                         ownCard: ownCard,
-                                        theirCard: theirCard
+                                        theirCard: theirCard,
+                                        opponentHand: 1-player
                                     });
 
                                     thisPlayer.specialMove = "king swap";
+
+                                    sendToAllExcept(player,"opponent-king-peeking",{
+                                        peekingPlayer: player,
+                                        opponentHand: 1-player,
+                                        opponentSlot: data.theirSlot,
+                                        ownSlot: data.ownSlot
+                                    });
                                 }
                                 break;
                             case "skip-special":
@@ -449,6 +468,19 @@ function cardToString(card) {
                 break;
             default:
                 console.log("error with card: ", card);
+        }
+    }
+}
+
+function sendToAllExcept(playersToSkip,message,data){
+    if(Number.isInteger(playersToSkip)) {
+        playersToSkip = [playersToSkip];
+    }
+
+    for (var p = 0; p < players.length; p++)
+    {
+        if(playersToSkip.indexOf(p) == -1) {
+            players[p].socket.emit(message,data);
         }
     }
 }

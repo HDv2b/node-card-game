@@ -51,7 +51,7 @@ function addCardSlotToHand(player,slot,data){
     let thisTemplate = player == ownId ? template.ownCardSlot : template.theirCardSlot;
     switch($thisSlot.length){
         case 0:
-            console.log("Creating slot "+slot+" in hand to accommodate new card...");
+            console.log("Creating slot "+slot+" in hand "+player+" to accommodate new card...");
             let thisNewCardSlot = thisTemplate
                 .replace(/SLOT_NUMBER/g,slot)
                 .replace(/SLOT_STATUS/g,data.slotStatus);
@@ -170,6 +170,8 @@ socket.on('new-turn', function(data){
         $table.attr("data-your-turn", "false");
         $table.attr("data-special-move", "false");
     }
+
+    //$('[data-slot-status="opponent-peeking"]').removeAttr("opponent-peeking");
 });
 
 socket.on('discarded', function(card){
@@ -236,22 +238,60 @@ socket.on('slam-fail', function(data){
 
 socket.on('blind-swapped', function(data){
     console.log("Your card in slot "+data.ownSlot+" has been swapped with opponents card in slot "+data.theirSlot+".");
+
+    animateBlindSwap(
+        {
+            hand: ownId,
+            slot: data.ownSlot
+        },
+        {
+            hand: 1-ownId,
+            slot:data.theirSlot
+        });
 });
 
 socket.on('seen-own', function(data){
     console.log("Your card in slot "+data.slot+" is "+cardToString(data.card)+".");
-    alert("Your card is "+cardToString(data.card)+".");
+    //alert("Your card is "+cardToString(data.card)+".");
+    animateOwnPeek(data);
 });
 
 socket.on('seen-theirs', function(data){
     console.log("Opponent's card in slot "+data.slot+" is "+cardToString(data.card)+".");
-    alert("The card is "+cardToString(data.card)+".");
+    animateOwnPeek(data);
+});
+
+socket.on('opponent-peeking', function(data){
+    console.log("Player "+data.peekingPlayer+" is looking at card "+data.slot+" in Player "+data.hand+"'s hand");
+    animateOpponentPeek(data);
+});
+
+socket.on('opponent-king-peeking', function(data){
+    console.log("Player "+data.peekingPlayer+" is looking at his own card in slot "+data.ownSlot+" and card "+data.theirSlot+" in Player "+data.opponentHand+"'s hand.");
+    animateOpponentPeek({
+        hand: data.peekingPlayer,
+        slot: data.ownSlot
+    });
+    animateOpponentPeek({
+        hand: data.opponentHand,
+        slot: data.opponentSlot
+    });
 });
 
 socket.on('king-seen', function(data){
     console.log("Your card in slot "+data.ownSlot+" is "+cardToString(data.ownCard)+", and their card in slot "+data.theirSlot+" is "+cardToString(data.theirCard)+".");
-    alert("Your card: "+cardToString(data.ownCard)+"\nTheir card: "+cardToString(data.theirCard));
     $table.attr("data-special-move","king-swap");
+
+    animateOwnPeek({
+        hand: data.opponentHand,
+        slot: data.opponentSlot,
+        card: data.theirCard
+    });
+    animateOwnPeek({
+        hand: ownId,
+        slot: data.ownSlot,
+        card: data.ownCard
+    });
 });
 
 socket.on("special-move",function(move){
@@ -301,6 +341,13 @@ socket.on("result",function(players){
         resultCopy = "You Lose :("
     }
     alert(resultCopy+"\nYour Score: "+players[ownId].score+"\nOpponent Score: "+players[1-ownId].score);
+});
+
+socket.on("player-acknowledged",function(data){
+    let $revealedSlots = $(".hand .card-slot[data-slot-status$='peeking']");
+
+    $revealedSlots.attr("data-slot-status","card-back");
+    $revealedSlots.find(".card").removeAttr("card-front");
 });
 
 // controls
@@ -356,6 +403,10 @@ $discardButton.click(function(){
         "data-slot-status":"slot-empty"
     });
     discard();
+});
+
+$table.on("click",".seen-button",function(){
+    acknowledgeRevealedCards();
 });
 
 function initBlindSwap(){
@@ -455,6 +506,10 @@ function skipSpecial(){
 
 function cabo(){
     socket.emit("turn-action",{action:"cabo"});
+}
+
+function acknowledgeRevealedCards() {
+    socket.emit("turn-action",{action:"acknowledged-revealed-cards"});
 }
 
 // Helper Functions
@@ -606,4 +661,67 @@ function setTipsBoxCopy(copy){
     };
 
     $tipsBox.text(copy.copy);
+}
+
+function animateBlindSwap(cardA,cardB){
+    let slotA = cardA.slot,
+        handA = cardA.hand,
+        slotB = cardB.slot,
+        handB = cardB.hand;
+
+    let $slotA =  $(".hand[data-player-id='"+handA+"'] .card-slot[data-slot-number='"+slotA+"']");
+
+    let $slotB =  $(".hand[data-player-id='"+handB+"'] .card-slot[data-slot-number='"+slotB+"']");
+
+    let $cardA = $slotA.find(".card");
+    let $cardB = $slotB.find(".card");
+
+    $cardA.animate({
+            "top": $cardB.offset().top - $cardA.offset().top,
+            "left": $cardB.offset().left - $cardA.offset().left
+        },
+        1000,
+         "linear",
+         function(){
+             $cardA.css({
+                 "top": 0,
+                 "left": 0
+             })
+         }
+    );
+
+    $cardB.animate({
+            "top": $cardA.offset().top - $cardB.offset().top,
+            "left": $cardA.offset().left - $cardB.offset().left
+        },
+        1000,
+         "linear",
+         function(){
+             $cardB.css({
+                 "top": 0,
+                 "left": 0
+             })
+         }
+    )
+}
+
+//peeks being done by an opponent, regardless of which hand they are peeking
+function animateOpponentPeek(data){
+    let $slot = $(".hand[data-player-id='"+data.hand+"'] .card-slot[data-slot-number='"+data.slot+"']");
+    let $card = $slot.find(".card");
+
+    //todo: player-specific peeking for variable number of players (eg which way to rotate the card for players "sat" at the sides of the screen)
+    //$slot.attr("data-peeking",data.player);
+    $slot.attr("data-slot-status","opponent-peeking");
+}
+
+//peeks being done by you, regardless of which hand you are peeking
+function animateOwnPeek(data){
+    let $slot = $(".hand[data-player-id='"+data.hand+"'] .card-slot[data-slot-number='"+data.slot+"']");
+    let $card = $slot.find(".card");
+
+    //todo: player-specific peeking for variable number of players
+    //$slot.attr("data-peeking",data.player);
+    $slot.attr("data-slot-status","own-peeking");
+    $card.attr("card-front",cardToAttr(data.card));
 }
