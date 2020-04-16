@@ -20,6 +20,7 @@ const socketsMap = [
     { command: "your-id", fn: handleId },
     { command: "game-starting", fn: handleGameStart },
     { command: "cards-dealt", fn: handleCardsDealt },
+    { command: "update-table", fn: handleUpdateTable },
     { command: "opening-reveal", fn: handleOpeningReveal },
     { command: "turned-first", fn: handleFirstCardTurning },
     { command: "new-turn", fn: handleNewTurn },
@@ -45,106 +46,52 @@ socketsMap.forEach(function (messageType){
     socket.on(messageType.command, messageType.fn)
 });
 
-var ownId,
-    allPlayers;
+let ownId;
+let name;
+let allPlayers = [];
+let gameStatus = 'lobby';
 
 var topDiscard = null;
 
-// elements
-
-var $table = $(".table"),
-    $hand = $(".hand"),
-    $cardSlot = $hand.find(".card"),
-    $myArea = $(".my-area"),
-    $opponentArea = $(".opponent-area"),
-    $myHand = $myArea.find(".hand"),
-    $opponentHand = $opponentArea.find(".hand"),
-    $myCards = $myHand.find(".cards"),
-    $opponentCards = $opponentHand.find(".cards"),
-    $discardPile = $('.discard-pile'),
-    $deck = $('.deck'),
-    $discardButton = $('.discard-button'),
-    $deckHoldingCard = $table.find(".drawn-card"),
-    $tipsBox = $("#tips-box");
-
-// templates
-
-var template = {
-    ownCardSlot : $("#own-card-slot-template").html(),
-    theirCardSlot : $("#their-card-slot-template").html()
-};
-
-function addCardSlotToHand(player,slot,data){
-    let $playerHand = $("[data-player-id='"+player+"']");
-    let $thisSlot = $playerHand.find("[data-slot-number='"+slot+"']");
-    let thisTemplate = player == ownId ? template.ownCardSlot : template.theirCardSlot;
-    switch($thisSlot.length){
-        case 0:
-            console.log("Creating slot "+slot+" in hand "+player+" to accommodate new card...");
-            let thisNewCardSlot = thisTemplate
-                .replace(/SLOT_NUMBER/g,slot)
-                .replace(/SLOT_STATUS/g,data.slotStatus);
-            $playerHand.append(thisNewCardSlot);
-            if(topDiscard) {
-                $(".discard-card-string").html(cardToString(topDiscard));
-            }
-            break;
-        case 1:
-            console.log("Slot "+slot+" already exists, filling...");
-            $thisSlot.attr("data-slot-status",data.slotStatus);
-            break;
-        default:
-            console.log("ERROR: MULTIPLE SLOTS ASSIGNED ID "+slot+" IN OWN HAND");
-            break;
-    }
+function addCardSlotToHand(player, slot, data){
+    renderAddCardSlotToHand(player, slot, data);
 }
 
-// states
-$table.attr("data-slam-available","false");
-$table.attr("data-your-turn","false");
-$table.attr("data-special-move","none");
+while (!name || name === "") {
+    name = prompt("What is your name?");
+}
 
-
-var name = prompt("What is your name?");
-//$(".player.name-tag").text(name);
 socket.emit('check-in',{name: name});
 
 function handleError(data) {
-    console.log(data.msg);
+    renderError(data.msg);
 }
 
 function handleGameEvent(data) {
-    console.log(data);
+    renderGameEvent(data);
 }
 
 function handlePlayerJoined(player) {
-    console.log(player.name + " has joined the game.");
+    renderPlayerJoined(player);
     //$(".opponent.name-tag").text(data.name);
 }
 
 function handlePlayersInfo(players) {
-    console.log("Player info:", players);
     allPlayers = players;
+    renderAllPlayersInfo(allPlayers);
 }
 
 function handleId(id) {
-    console.log("player id is "+id);
     ownId = id;
+    // renderOwnId(ownId);
 }
 
 function handleGameStart() {
-    $myArea.find(".name-tag").text(allPlayers[ownId].name);
-    $myHand.attr("data-player-id",ownId);
-    $opponentArea.find(".name-tag").text(allPlayers[1-ownId].name);
-    $opponentHand.attr("data-player-id",1-ownId);
-    console.log("Game is full. Starting...");
+    gameStatus = 'in progress';
+    renderGameStart();
 }
 
 function handleCardsDealt(totalCards) {
-    console.log(totalCards+" cards dealt each");
-    $cardSlot.attr("data-slot-status","card-back");
-    $deck.attr("data-slot-status","card-back");
-    $discardPile.attr("data-slot-status","slot-empty");
     let data = {
         slotStatus : "card-back"
     };
@@ -153,10 +100,15 @@ function handleCardsDealt(totalCards) {
             addCardSlotToHand(p, t, data);
         }
     }
+    renderCardsDealt(totalCards);
+}
+
+function handleUpdateTable(table) {
+    renderTable(table);
 }
 
 function handleOpeningReveal(cards) {
-    console.log("Cards revealed: " + cardsToString([cards[0].card, cards[1].card]));
+    console.log("Cards revealed: " + cardsToString(cards));
     $(cards).each(function (i, card) {
         $myHand
             .find(".card-slot[data-slot-number='" + card.slot + "']")
@@ -384,65 +336,6 @@ function handlePlayerReady(data) {
     $revealedSlots.find(".card").removeAttr("card-front");
 }
 
-// controls
-
-$myHand.on("click",".slam-button",function(){
-    let $this = $(this);
-    let slotClicked = $this.closest(".card-slot").attr("data-slot-number");
-    slamOwn(slotClicked);
-});
-
-$opponentHand.on("click",".slam-button",function(){
-    let $this = $(this);
-    let slotClicked = $this.closest(".card-slot").attr("data-slot-number");
-    let handOwner = $this.closest(".hand").attr("data-player-id");
-    slam(handOwner,slotClicked);
-});
-
-$myHand.on("click",".swap-discard-button",function(){
-    let $this = $(this);
-    let slotClicked = $this.closest(".card-slot").attr("data-slot-number");
-    takeFromDiscards(slotClicked);
-});
-
-$deck.on("click",".take-deck-button",function(){
-    let $this = $(this);
-    let slotClicked = $this.closest(".card-slot").attr("data-slot-number");
-    takeFromDeck();
-});
-
-$myHand.on("click",".swap-deck-button",function(){
-    let $this = $(this);
-    let slotClicked = $this.closest(".card-slot").attr("data-slot-number");
-    keep(slotClicked);
-});
-
-$myHand.on("click",".see-own-button",function(){
-    let $this = $(this);
-    let slotClicked = $this.closest(".card-slot").attr("data-slot-number");
-    seeOwn(slotClicked);
-});
-
-$opponentHand.on("click",".see-theirs-button",function(){
-    let $this = $(this);
-    let slotClicked = $this.closest(".card-slot").attr("data-slot-number");
-    console.log("looking at slot "+slotClicked+" in opponent's hand...");
-    seeTheirs(slotClicked);
-});
-
-$discardButton.click(function(){
-    $table.attr("data-picked-from-deck","false");
-    $deckHoldingCard.attr({
-        "card-front":"",
-        "data-slot-status":"slot-empty"
-    });
-    discard();
-});
-
-$table.on("click",".seen-button",function(){
-    acknowledgeRevealedCards();
-});
-
 function initBlindSwap(){
     let ownSlot = parseInt($("[name='blind-swap-own']:checked").val());
     let $checked = $("[name='blind-swap-theirs']:checked");
@@ -466,26 +359,6 @@ function initKingSee(){
         $("[name='king-see-theirs']").prop('checked',false);
     }
 }
-
-$opponentHand.on("click",".blind-swap-radio",function(){
-    initBlindSwap()
-});
-
-$myHand.on("click",".blind-swap-radio",function(){
-    initBlindSwap()
-});
-
-$opponentHand.on("click",".king-see-theirs-radio",function(){
-    initKingSee()
-});
-
-$myHand.on("click",".king-see-own-radio",function(){
-    initKingSee()
-});
-
-$table.on("click",".cabo-button",function(){
-    cabo()
-});
 
 // Game functions
 
@@ -549,13 +422,14 @@ function acknowledgeRevealedCards() {
 // Helper Functions
 
 function cardsToString(cards){
-    return cards.map(cardToString);
+    console.log(cards);
+    return [cards[0].card, cards[1].card].map(cardToString);
 }
 
 function cardToString(card){
     var valueString,
         suitString;
-    if(card.value != JOKER) {
+    if(card.value !== JOKER) {
         switch (card.value) {
             case 1:
                 valueString = "A";

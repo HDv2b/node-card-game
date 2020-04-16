@@ -20,7 +20,7 @@ const JOKER = 14;
 
 // Arbitrary values
 
-const MAXPLAYERS = 2;
+const MAXPLAYERS = 10;
 
 
 //var rules = require('./lib/classes/Game');
@@ -55,20 +55,22 @@ io.on('connection', function(socket){
     console.log('Browser connection');
 
     socket.on('check-in', function(data){
-        game.addPlayer(socket.id,new Player(data.name,socket));
-        socket.broadcast.emit('player-joined',data);
+        game.addPlayer(socket.id, new Player(data.name,socket));
+        io.emit('player-joined', data);
         console.log(game.playerCount + " out of " + MAXPLAYERS);
-        if (game.playerCount == MAXPLAYERS) {
+
+        let publicPlayerInfo = [];
+        for(var p = 0, l = game.players.length; p < l; p++){
+          let player = game.players[p];
+          publicPlayerInfo[p] = {
+            name: player.name
+          };
+          player.socket.emit('your-id', p);
+        }
+        io.emit('players-info',publicPlayerInfo);
+
+        if (game.playerCount === MAXPLAYERS) {
             console.log("Game is full. Game starting....");
-            let publicPlayerInfo = [];
-            for(var p = 0, l = game.players.length; p < l; p++){
-                let player = game.players[p];
-                publicPlayerInfo[p] = {
-                    name: player.name
-                };
-                player.socket.emit('your-id',p);
-            }
-            io.emit('players-info',publicPlayerInfo);
             io.emit('game-starting');
             game.commence(io);
         }

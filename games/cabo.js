@@ -1,7 +1,3 @@
-/**
- * Created by elgoo on 07/04/2016.
- */
-
 'use strict';
 
 const CLUBS = 1;
@@ -43,7 +39,8 @@ module.exports = class Cabo extends Game {
             players[player].createHand('table', cardsDealt);
         }
 
-        io.emit("cards-dealt",TOTAL_STARTING_CARDS);
+        io.emit("cards-dealt", TOTAL_STARTING_CARDS);
+        io.emit('update-table', updateTable());
 
         // Reveal two close cards for each player
         var playersReady = 0;
@@ -52,9 +49,13 @@ module.exports = class Cabo extends Game {
         var caboCalled = false;
         var slamAvailable = false;
 
+        function updateTable() {
+          return players.map(({ hands, name }) => ({name, hand: hands.table.cards.map((card) => !!card)}));
+        }
+
         function endTurn() {
             slamAvailable = true;
-            if(++playerTurn == TOTAL_PLAYERS){
+            if(++playerTurn === TOTAL_PLAYERS){
                 playerTurn = 0;
             }
 
@@ -183,7 +184,7 @@ module.exports = class Cabo extends Game {
                         break;
 
                     default:
-                        if (playerTurn == player) {
+                        if (playerTurn === player) {
                         console.log("==================================");
                         console.log("=           Turn Taken           =");
                         console.log("==================================");
