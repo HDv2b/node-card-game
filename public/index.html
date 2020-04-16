@@ -3,77 +3,178 @@
     <head>
         <meta charset="UTF-8">
         <title>Node Card Game Engine Demo: Blinds - Hussein Duvigneau, NotMyBase.com</title>
-        <link rel="stylesheet" href="/css/style.css">
+        <!--        <link rel="stylesheet" href="/css/style.css">-->
     </head>
     <body>
-<!--        <header>
+    <!--        <header>
 
-        </header>-->
-        <div class="table">
-            <div class="player-area opponent-area">
-                <div class="opponent name-tag">Opponent</div>
-                <div class="hand"></div>
-            </div>
-            <div class="middle-area">
-                <div class="deck">
-                    <button class="take-deck-button">Take Card</button>
-                    <div class="drawn-card" data-slot-status="empty"></div>
+            </header>-->
+    <!--        <div class="table">
+                <div class="player-area opponent-area">
+                    <div class="opponent name-tag">Opponent</div>
+                    <div class="hand"></div>
                 </div>
-                <div class="discard-pile">
-                    <button class="discard-button">Discard</button>
+                <div class="middle-area">
+                    <div class="deck">
+                        <button class="take-deck-button">Take Card</button>
+                        <div class="drawn-card" data-slot-status="empty"></div>
+                    </div>
+                    <div class="discard-pile">
+                        <button class="discard-button">Discard</button>
+                    </div>
+                    <div class="middle-controls">
+                        <button class="cabo-button">"Cabo!"</button>
+                    </div>
                 </div>
-                <div class="middle-controls">
-                    <button class="cabo-button">"Cabo!"</button>
+                <div class="player-area my-area">
+                    <div class="hand"></div>
+                    <div class="player name-tag">You</div>
                 </div>
             </div>
-            <div class="player-area my-area">
-                <div class="hand"></div>
-                <div class="player name-tag">You</div>
-            </div>
-        </div>
-        <div id="tips-box" class="tips-box">
+            <div id="tips-box" class="tips-box">
+    </div>-->
 
+        <div>
+            <h1>Card Values</h1>
+            <table id="helper-card-values">
+                <tr>
+                    <td>Joker</td>
+                    <td>-1</td>
+                </tr>
+                <tr>
+                    <td>Red King</td>
+                    <td>0</td>
+                </tr>
+                <tr>
+                    <td>Ace</td>
+                    <td>1</td>
+                </tr>
+                <tr>
+                    <td>2-10</td>
+                    <td>2-10</td>
+                </tr>
+                <tr>
+                    <td>Jack</td>
+                    <td>11</td>
+                </tr>
+                <tr>
+                    <td>Queen</td>
+                    <td>12</td>
+                </tr>
+                <tr>
+                    <td>Black King</td>
+                    <td>13</td>
+                </tr>
+            </table>
         </div>
-        <table id="helper-card-values">
-            <tr>
-                <td>Joker</td><td>-1</td>
-            </tr>
-            <tr>
-                <td>Red King</td><td>0</td>
-            </tr>
-            <tr>
-                <td>Ace</td><td>1</td>
-            </tr>
-            <tr>
-                <td>2-10</td><td>2-10</td>
-            </tr>
-            <tr>
-                <td>Jack</td><td>11</td>
-            </tr>
-            <tr>
-                <td>Queen</td><td>12</td>
-            </tr>
-            <tr>
-                <td>Black King</td><td>13</td>
-            </tr>
-        </table>
-        <table id="helper-card-specials">
-            <tr>
-                <td>7/8</td><td>Look at own</td>
-            </tr>
-            <tr>
-                <td>9/10</td><td>Look at theirs</td>
-            </tr>
-            <tr>
-                <td>J/Q</td><td>Blind swap</td>
-            </tr>
-            <tr>
-                <td>Black K</td><td>Look &amp; swap</td>
-            </tr>
-        </table>
-<!--        <footer>
-            <a href="http://notmybase.com" target="_blank">Hussein Duvigneau</a>
-        </footer>-->
+        <div>
+            <h1>Magic Cards</h1>
+            <table id="helper-card-specials">
+                <tr>
+                    <td>7/8</td>
+                    <td>Look at own</td>
+                </tr>
+                <tr>
+                    <td>9/10</td>
+                    <td>Look at theirs</td>
+                </tr>
+                <tr>
+                    <td>J/Q</td>
+                    <td>Blind swap</td>
+                </tr>
+                <tr>
+                    <td>Black K</td>
+                    <td>Look &amp; swap</td>
+                </tr>
+            </table>
+        </div>
+        <div>
+            <h1>How to Play</h1>
+            <p><b>!!! To play, please open your browser console !!!</b></p>
+            <h2>Objective</h2>
+            <p>
+                Have lowest total card value in your hand, at the end of the game. See table above for values per card.<br/>
+            </p>
+            <h2>Deal</h2>
+            <p>
+                Each player is dealt 4 unrevealed cards split into two rows, face-down in front of them.<br/>
+                The remaining deck is placed faced down in the middle of the table, with adjacent space for a discard pile.
+            </p>
+            <h2>Opening</h2>
+            <p>
+                All players can pick up and look at their closest row of cards, and then place them back down again.<br/>
+                <i>Hint: You should try to memorise these cards and in which position they lie once placed back on the
+                    table.</i><br/>
+                Once all players have put their cards back down and ready to begin, the dealer will turn the first card over and
+                place it face up to initiate the discard pile.<br/>
+                Now players commence their turns.
+            </p>
+            <h2>For each turn</h2>
+            <p>
+                The player must pick up either the top card from either the discard pile or the faced-down deck. The player can
+                choose to either keep the card, or throw it away.<br/>
+                By keeping the card, the player must swap it for any one of their own cards, placing the replaced card face up
+                in the discard pile.<br/>
+                <i>Hint: Remember the objective is to collect the lowest total value, so you want to replace your high-value
+                    cards with low-value cards</i><br/>
+                If the player picked up a 7,8,9,10,J,Q, or <b>Black</b> K from the deck and immediately discards it, they can do
+                a special move.
+            </p>
+            <h3>7 or 8 Look at own</h3>
+            <p>
+                The player may look at one of their own cards briefly before putting it back in the same place.
+            </p>
+            <h3>9 or 10 Look at theirs</h3>
+            <p>
+                The player may look at one of someone else's cards briefly before putting it back in the same place.
+            </p>
+            <h3>Jack or Queen</h3>
+            <p>
+                The player can blind-swap one of their cards for someone else's.
+            </p>
+            <h3><b>Black</b> King</h3>
+            <p>
+                The player can look at one of their cards, and one of someone else's, and then choose to swap.
+            </p>
+            <h2>In between turns</h2>
+            <p>
+                There are actions players can take at any time even when it isn't their turn.<br/>
+            </p>
+            <h3>Slam own</h3>
+            <p>
+                If a card is discarded, and a player thinks one of their cards has the same number or face, they may "slam"
+                their card.<br/>
+                This means taking that card and placing it face-up on the discard pile. However, once a slam has taken place,
+                their can be no further slams until different card is discarded.<br/>
+                The player who successfully slammed first now has one less card to count at the end of the game<br/>
+                If the player slams a card which doesn't match the number or face of the previous card, they must take their
+                card back and be dealt another card faced-down to their collection.
+            </p>
+            <h3>Slam theirs</h3>
+            <p>
+                ... Similarly, if a player thinks an opponent's card matches the face or value of the last-discarded card, they
+                may try to slam that card.<br/>
+                Again, if they get it wrong, the mistaken card is replaced, and the offender must collect a new card for their
+                own collection.
+            </p>
+            <h3>Endgame</h3>
+            <p>
+                When a player believes they have a winning hand, instead of picking up a card on their turn, they call "Cabo".
+                Their cards are locked and no-one can touch them.<br/>
+                The remaining players each take a final turn (but cannot call "Cabo" themselves).<br/>
+                Once the final player has had their turn, all the cards are revealed.<br/>
+                The winner is the player with the lowest total card value. The winner gets first turn in the next round.
+            </p>
+            <h2>Tie-breakers</h2>
+            <p>
+                If there is a draw, the player with the least total number of cards winds.<br/>
+                If there is still a draw, then the person who called "Cabo" <b>loses</b> and the other player wins.
+                If there is still a draw and neither of the players called "Cabo", then the game remains a draw.
+            </p>
+        </div>
+        <!--        <footer>
+                    <a href="http://notmybase.com" target="_blank">Hussein Duvigneau</a>
+                </footer>-->
 
         <script type="text/template" id="their-card-slot-template">
             <div class="card-slot" data-slot-status="SLOT_STATUS" data-slot-number="SLOT_NUMBER">
@@ -81,8 +182,10 @@
                 <div class="card-controls">
                     <button class="slam-button">Slam</button>
                     <button class="see-theirs-button">Peek</button>
-                    <label class="blind-swap-radio">Swap <input type="radio" name="blind-swap-theirs" value="SLOT_NUMBER"/></label>
-                    <label class="king-see-theirs-radio">Peek <input type="radio" name="king-see-theirs" value="SLOT_NUMBER"/></label>
+                    <label class="blind-swap-radio">Swap <input type="radio" name="blind-swap-theirs"
+                                                                value="SLOT_NUMBER"/></label>
+                    <label class="king-see-theirs-radio">Peek <input type="radio" name="king-see-theirs"
+                                                                     value="SLOT_NUMBER"/></label>
                     <button class="seen-button">Seen</button>
                 </div>
             </div>
