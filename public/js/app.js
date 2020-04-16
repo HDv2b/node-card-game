@@ -1,7 +1,3 @@
-/**
- * Created by elgoo on 07/04/2016.
- */
-
 const CLUBS = 1;
 const DIAMONDS = 2;
 const HEARTS = 3;
@@ -15,6 +11,39 @@ const KING = 13;
 const JOKER = 14;
 
 var socket = io();
+
+const socketsMap = [
+    { command: "error", fn: handleError },
+    { command: "game-event", fn: handleGameEvent },
+    { command: "player-joined", fn: handlePlayerJoined },
+    { command: "players-info", fn: handlePlayersInfo },
+    { command: "your-id", fn: handleId },
+    { command: "game-starting", fn: handleGameStart },
+    { command: "cards-dealt", fn: handleCardsDealt },
+    { command: "opening-reveal", fn: handleOpeningReveal },
+    { command: "turned-first", fn: handleFirstCardTurning },
+    { command: "new-turn", fn: handleNewTurn },
+    { command: "discarded", fn: handleDiscard },
+    { command: "card-drawn", fn: handleCardDrawn },
+    { command: "opponent-card-drawn", fn: handleOpponentCardDrawn },
+    { command: "you-kept", fn: handlePlayerKept },
+    { command: "slam-success", fn: handleSlamSuccess },
+    { command: "slam-fail", fn: handleSlamFail },
+    { command: "blind-swapped", fn: handleBlindSwap },
+    { command: "seen-own", fn: handleSeenOwn },
+    { command: "seen-theirs", fn: handleSeenTheirs },
+    { command: "king-seen", fn: handleKingSeen },
+    { command: "opponent-peeking", fn: handleOpponentPeeking },
+    { command: "opponent-king-peeking", fn: handleOpponentKingPeeking },
+    { command: "special-move", fn: handleSpecialMove },
+    { command: "cabo", fn: handleCabo },
+    { command: "result", fn: handleResults },
+    { command: "player-acknowledged", fn: handlePlayerReady },
+];
+
+socketsMap.forEach(function (messageType){
+    socket.on(messageType.command, messageType.fn)
+});
 
 var ownId,
     allPlayers;
@@ -71,7 +100,6 @@ function addCardSlotToHand(player,slot,data){
 }
 
 // states
-
 $table.attr("data-slam-available","false");
 $table.attr("data-your-turn","false");
 $table.attr("data-special-move","none");
@@ -81,38 +109,38 @@ var name = prompt("What is your name?");
 //$(".player.name-tag").text(name);
 socket.emit('check-in',{name: name});
 
-socket.on("error",function(data){
+function handleError(data) {
     console.log(data.msg);
-});
+}
 
-socket.on('game-event', function(data){
+function handleGameEvent(data) {
     console.log(data);
-});
+}
 
-socket.on('player-joined', function(data){
+function handlePlayerJoined(data) {
     console.log(data.name + " has joined the game.");
     //$(".opponent.name-tag").text(data.name);
-});
+}
 
-socket.on('players-info',function(players) {
+function handlePlayersInfo(players) {
     console.log("Player info:", players);
     allPlayers = players;
-});
+}
 
-socket.on('your-id',function(id){
+function handleId(id) {
     console.log("player id is "+id);
     ownId = id;
-});
+}
 
-socket.on('game-starting', function(){
+function handleGameStart() {
     $myArea.find(".name-tag").text(allPlayers[ownId].name);
     $myHand.attr("data-player-id",ownId);
     $opponentArea.find(".name-tag").text(allPlayers[1-ownId].name);
     $opponentHand.attr("data-player-id",1-ownId);
     console.log("Game is full. Starting...");
-});
+}
 
-socket.on('cards-dealt', function(totalCards){
+function handleCardsDealt(totalCards) {
     console.log(totalCards+" cards dealt each");
     $cardSlot.attr("data-slot-status","card-back");
     $deck.attr("data-slot-status","card-back");
@@ -125,44 +153,44 @@ socket.on('cards-dealt', function(totalCards){
             addCardSlotToHand(p, t, data);
         }
     }
-});
+}
 
-socket.on('opening-reveal', function(cards){
-    console.log("Cards revealed: "+cardsToString([cards[0].card,cards[1].card]));
-    $(cards).each(function(i,card){
+function handleOpeningReveal(cards) {
+    console.log("Cards revealed: " + cardsToString([cards[0].card, cards[1].card]));
+    $(cards).each(function (i, card) {
         $myHand
-            .find(".card-slot[data-slot-number='"+card.slot+"']")
+            .find(".card-slot[data-slot-number='" + card.slot + "']")
             .attr({
-                "data-slot-status":"card-front"
+                "data-slot-status": "card-front"
             })
             .find(".card")
             .attr({
-                "card-front":cardToAttr(card.card)
+                "card-front": cardToAttr(card.card)
             })
     });
-    window.setTimeout(function(){
+    window.setTimeout(function () {
         alert("Memorise these cards and click when done.");
         socket.emit("opening-reveal-seen");
-        $(cards).each(function(i,card){
+        $(cards).each(function (i, card) {
             $myHand
-                .find(".card-slot[data-slot-number='"+card.slot+"']")
+                .find(".card-slot[data-slot-number='" + card.slot + "']")
                 .attr({
-                    "data-slot-status":"card-back"
+                    "data-slot-status": "card-back"
                 })
                 .find(".card")
                 .attr({
-                    "card-front":""
+                    "card-front": ""
                 })
         });
-    },0);
-});
+    }, 0);
+}
 
-socket.on('turned-first', function(card){
+function handleFirstCardTurning() {
     console.log("First card turned...");
-});
+}
 
-socket.on('new-turn', function(data){
-    if(data.player == ownId) {
+function handleNewTurn(data) {
+    if(data.player === ownId) {
         console.log("Your Turn...");
         $table.attr("data-your-turn", "true");
     }else {
@@ -172,9 +200,9 @@ socket.on('new-turn', function(data){
     }
 
     //$('[data-slot-status="opponent-peeking"]').removeAttr("opponent-peeking");
-});
+}
 
-socket.on('discarded', function(card){
+function handleDiscard(card) {
     console.log("Top card in discard pile: "+cardToString(card));
     topDiscard = card;
 
@@ -190,9 +218,9 @@ socket.on('discarded', function(card){
     });
 
     $table.attr("data-slam-available","true");
-});
+}
 
-socket.on('card-drawn', function(data){
+function handleCardDrawn(data) {
     var cardAsString = cardToString(data.card);
     topDiscard = data.card;
     $myHand.find(".deck-card-string").text(cardToString(topDiscard));
@@ -202,41 +230,41 @@ socket.on('card-drawn', function(data){
         "data-slot-status":"card-front"
     });
     console.log('Drew a '+cardToString(topDiscard)+'. keep(slot) or discard()..');
-});
+}
 
-socket.on('opponent-card-drawn',function(data){
+function handleOpponentCardDrawn(data) {
     $deckHoldingCard.attr({
         "data-slot-status":"card-back"
     });
     console.log('Opponent '+data.player+' is drawing from deck...');
-});
+}
 
-socket.on('you-kept', function(slot){
+function handlePlayerKept(slot) {
     $table.attr("data-picked-from-deck","false");
     $deckHoldingCard.attr({
         "card-front":"",
         "data-slot-status":"slot-empty"
     });
     console.log('You kept and placed in slot '+slot);
-});
+}
 
-socket.on('slam-success', function(data){
+function handleSlamSuccess(data) {
     console.log("Player"+data.slammer+" successfully slammed a "+cardToString(data.card)+" from Player "+data.handOwner+"'s slot "+data.slot);
     let $hand = $table.find(".hand[data-player-id='"+data.handOwner+"']");
     $hand.find("[data-slot-number='"+data.slot+"']").attr("data-slot-status","empty");
     $discardPile.attr("card-front",cardToAttr(data.card));
     $(".discard-card-string").text(cardToString(data.card));
     $table.attr("data-slam-available","false");
-});
+}
 
-socket.on('slam-fail', function(data){
+function handleSlamFail(data) {
     console.log("Player "+data.slammer+" unsuccessfully slammed a "+cardToString(data.card)+" from Player "+data.handOwner+"'s slot "+data.slot+", and now has a new card in slot "+data.newCardSlot);
     addCardSlotToHand(data.slammer,data.newCardSlot,{
         slotStatus : "card-back"
     });
-});
+}
 
-socket.on('blind-swapped', function(data){
+function handleBlindSwap(data) {
     console.log("Your card in slot "+data.ownSlot+" has been swapped with opponents card in slot "+data.theirSlot+".");
 
     animateBlindSwap(
@@ -248,25 +276,26 @@ socket.on('blind-swapped', function(data){
             hand: 1-ownId,
             slot:data.theirSlot
         });
-});
+}
 
-socket.on('seen-own', function(data){
+function handleSeenOwn(data) {
     console.log("Your card in slot "+data.slot+" is "+cardToString(data.card)+".");
     //alert("Your card is "+cardToString(data.card)+".");
     animateOwnPeek(data);
-});
+}
 
-socket.on('seen-theirs', function(data){
+function handleSeenTheirs(data) {
     console.log("Opponent's card in slot "+data.slot+" is "+cardToString(data.card)+".");
     animateOwnPeek(data);
-});
+}
 
-socket.on('opponent-peeking', function(data){
+function handleOpponentPeeking(data) {
     console.log("Player "+data.peekingPlayer+" is looking at card "+data.slot+" in Player "+data.hand+"'s hand");
     animateOpponentPeek(data);
-});
+}
 
-socket.on('opponent-king-peeking', function(data){
+
+function handleOpponentKingPeeking(data) {
     console.log("Player "+data.peekingPlayer+" is looking at his own card in slot "+data.ownSlot+" and card "+data.theirSlot+" in Player "+data.opponentHand+"'s hand.");
     animateOpponentPeek({
         hand: data.peekingPlayer,
@@ -276,9 +305,9 @@ socket.on('opponent-king-peeking', function(data){
         hand: data.opponentHand,
         slot: data.opponentSlot
     });
-});
+}
 
-socket.on('king-seen', function(data){
+function handleKingSeen(data) {
     console.log("Your card in slot "+data.ownSlot+" is "+cardToString(data.ownCard)+", and their card in slot "+data.theirSlot+" is "+cardToString(data.theirCard)+".");
     $table.attr("data-special-move","king-swap");
 
@@ -292,21 +321,21 @@ socket.on('king-seen', function(data){
         slot: data.ownSlot,
         card: data.ownCard
     });
-});
+}
 
-socket.on("special-move",function(move){
+function handleSpecialMove(move) {
     $table.attr("data-special-move",move);
-});
+}
 
-socket.on("cabo",function(player){
+function handleCabo(player) {
     alert("Player "+player+" has called Cabo");
     let $caboHand = $table.find("[data-player-id='"+player+"']");
     $caboHand.attr("data-cabo","called");
     $table.attr("data-cabo","called");
     setTipsBoxCopy("cabo");
-});
+}
 
-socket.on("result",function(players){
+function handleResults(players) {
     console.log("Results are in...");
     $table.attr("data-cabo","results");
     console.log(players);
@@ -318,8 +347,8 @@ socket.on("result",function(players){
             let thisCard = thisPlayer.hand[c];
             $thisHand.find("[data-slot-number='"+c+"']")
                 .attr({
-                "data-slot-status":"card-front-public"
-            })
+                    "data-slot-status":"card-front-public"
+                })
                 .find(".card")
                 .attr({
                     "card-front":cardToAttr(thisCard)
@@ -341,14 +370,14 @@ socket.on("result",function(players){
         resultCopy = "You Lose :("
     }
     alert(resultCopy+"\nYour Score: "+players[ownId].score+"\nOpponent Score: "+players[1-ownId].score);
-});
+}
 
-socket.on("player-acknowledged",function(data){
+function handlePlayerReady(data) {
     let $revealedSlots = $(".hand .card-slot[data-slot-status$='peeking']");
 
     $revealedSlots.attr("data-slot-status","card-back");
     $revealedSlots.find(".card").removeAttr("card-front");
-});
+}
 
 // controls
 
@@ -646,7 +675,7 @@ function cardToAttr(card){
     return cssAttr;
 }
 
-function setTipsBoxCopy(copy){
+function setTipsBoxCopy(){
     let copy = {
         newGame : "A new game is starting.",
         openingReveal: "Memorise these two cards; you might never see them again.",
@@ -660,7 +689,7 @@ function setTipsBoxCopy(copy){
         cabo: "Cabo has been called! Players (except the caller) get a final turn before cards are turned. Caller's cards are locked."
     };
 
-    $tipsBox.text(copy.copy);
+    $tipsBox.text(copy);
 }
 
 function animateBlindSwap(cardA,cardB){
