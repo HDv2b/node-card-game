@@ -117,8 +117,8 @@ function handleGameEvent(data) {
     console.log(data);
 }
 
-function handlePlayerJoined(data) {
-    console.log(data.name + " has joined the game.");
+function handlePlayerJoined(player) {
+    console.log(player.name + " has joined the game.");
     //$(".opponent.name-tag").text(data.name);
 }
 
@@ -192,6 +192,11 @@ function handleFirstCardTurning() {
 function handleNewTurn(data) {
     if(data.player === ownId) {
         console.log("Your Turn...");
+        console.log("You can:");
+        console.log("takeFromDeck() - take the top card from the deck");
+        console.log("takeFromDiscards(<slotNumber>) - take the last discarded card");
+        console.log("slamOwn(<slotNumber>) - slam one of your own cards");
+        console.log("slam(<playerNumber>,<slotNumber>) - slam one of your opponent's cards");
         $table.attr("data-your-turn", "true");
     }else {
         console.log("Player "+data.player+"'s turn.");
